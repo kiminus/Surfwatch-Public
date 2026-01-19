@@ -80,3 +80,11 @@ extra_css:
 
 copyright: "© 2024 Zilin Liu"
 
+nav: 
+  - Home: index.md
+  - Architecture: architecture.md
+  - Hardware: hardware.md
+  - Firmware: firmware.md
+  - Backend & Inference: backend.md
+  - Frontend: frontend.md
+  - Results: results.md
