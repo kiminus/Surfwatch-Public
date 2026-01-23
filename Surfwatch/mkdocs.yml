@@ -83,8 +83,10 @@ copyright: "© 2024 Zilin Liu"
 nav: 
   - Home: index.md
   - Architecture: architecture.md
-  - Hardware: hardware.md
-  - Firmware: firmware.md
-  - Backend & Inference: backend.md
+  - Firmware Engineering:
+      - ESP32 & FreeRTOS: firmware/freertos-implementation.md # HIGHLIGHT: Explain Tasks vs Queues here
+      - Memory Management: firmware/memory-optimization.md # HIGHLIGHT: Explain DMA & PSRAM usage
+      - Camera Driver: firmware/ov2640-driver.md
+  - AI & Backend: backend.md
   - Frontend: frontend.md
   - Results: results.md
