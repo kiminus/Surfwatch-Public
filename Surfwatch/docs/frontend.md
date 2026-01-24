@@ -1,0 +1,3 @@
+* **Real-Time Data Flow:** Explain that the frontend does *not* poll the server. Instead, it maintains a **WebSocket** connection. When the Python backend finishes processing a frame, it pushes the new "Crowd Count" integer to the app immediately.
+* **State Management:** Briefly mention how you handled the incoming stream (e.g., using a `useEffect` hook to bind the WebSocket listener and updating a React State variable `setCrowdCount`).
+* **Visuals:** Mention that you used libraries (like `react-native-chart-kit` or simple SVG indicators) to visualize the "Occupancy Level" (Low/Med/High) based on the raw count.
