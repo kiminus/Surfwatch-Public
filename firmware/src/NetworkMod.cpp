@@ -3,20 +3,54 @@
 #include <PubSubClient.h> // Requires PubSubClient Library
 #include "Config.h"
 #include "Shared.h"
+#include "Secrets.h"
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 
-// --- HELPER: Upload Image (HTTP) ---
+void executeCommand(String cmd) {
+    cmd.trim(); // Remove whitespace just in case
+    Serial.println("[HTTP] Executing Command: " + cmd);
+    // --- LED States ---
+    if (cmd == "SET_LED_STATE_ON") {
+        Serial.println("Action: LED ON");
+        digitalWrite(LED_FLASH_GPIO_NUM, HIGH);
+
+    } else if (cmd == "SET_LED_STATE_OFF") {
+        Serial.println("Action: LED OFF");
+        digitalWrite(LED_FLASH_GPIO_NUM, LOW);
+
+    } else if (cmd == "SET_LED_STATE_BLINK") {
+        Serial.println("Action: LED Blinking");
+        // enableBlinkMode();
+
+    // --- Power & System (Grouped Synonyms) ---
+    } else if (cmd == "POWER_ON") {
+        Serial.println("Action: System Wake");
+        
+    } else if (cmd == "POWER_OFF") {
+        Serial.println("Action: System Sleep");
+        esp_deep_sleep_start();
+
+    } else if (cmd == "REBOOT") {
+        Serial.println("Action: Rebooting...");
+        ESP.restart();
+    // --- Default / Unknown ---
+    } else {
+        Serial.print("Unknown Command: ");
+        Serial.println(cmd);
+    }
+}
+
 void uploadImage(camera_fb_t* fb) {
     if(WiFi.status() != WL_CONNECTED) return;
     
     HTTPClient http;
-    http.begin(SERVER_UPLOAD_IMAGE_URL);
+    http.begin(String(SERVER_BASE_URL) + String(SERVER_UPLOAD_IMAGE_URL));
     http.addHeader("Content-Type", "image/jpeg");
 
     // --- ADD CUSTOM HEADERS HERE ---
-    http.addHeader("X-Device-ID", "ESP32_Cam_01");
+    http.addHeader("X-Device-ID", DEVICE_NAME);
     http.addHeader("X-Timestamp", String(millis()));
 
     int httpResponse = http.POST(fb->buf, fb->len);
@@ -54,42 +88,10 @@ void uploadImage(camera_fb_t* fb) {
     http.end();
 }
 
-void executeCommand(String cmd) {
-    cmd.trim(); // Remove whitespace just in case
-    Serial.println("[HTTP] Executing Command: " + cmd);
-    // --- LED States ---
-    if (cmd == "SET_LED_STATE_ON") {
-        Serial.println("Action: LED ON");
-        digitalWrite(LED_FLASH_GPIO_NUM, HIGH);
-
-    } else if (cmd == "SET_LED_STATE_OFF") {
-        Serial.println("Action: LED OFF");
-        digitalWrite(LED_FLASH_GPIO_NUM, LOW);
-
-    } else if (cmd == "SET_LED_STATE_BLINK") {
-        Serial.println("Action: LED Blinking");
-        // enableBlinkMode();
-
-    // --- Power & System (Grouped Synonyms) ---
-    } else if (cmd == "POWER_ON") {
-        Serial.println("Action: System Wake");
-        
-    } else if (cmd == "POWER_OFF") {
-        Serial.println("Action: System Sleep");
-        esp_deep_sleep_start();
-
-    } else if (cmd == "REBOOT") {
-        Serial.println("Action: Rebooting...");
-        ESP.restart();
-    // --- Default / Unknown ---
-    } else {
-        Serial.print("Unknown Command: ");
-        Serial.println(cmd);
-    }
-}
 // --- MAIN TASK ---
 void Task_Network(void *pvParameters) {
     // 1. Setup WiFi
+    Serial.println("Connecting to WiFi..., SSID: " + String(WIFI_SSID) + ", PASS: " + String(WIFI_PASS));
     WiFi.begin(WIFI_SSID, WIFI_PASS);
     while (WiFi.status() != WL_CONNECTED) {
         vTaskDelay(500);

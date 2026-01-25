@@ -21,16 +21,13 @@
 #define LED_RED_GPIO_NUM  33
 #define LED_FLASH_GPIO_NUM  4
 
-// --- WIFI & SERVER ---
-#define WIFI_SSID       "UCScamDeigo"
-#define WIFI_PASS       "mainwater154"
-
 // HTTP
 #define NETWORK_QUEUE_MAX_SIZE 5
 #define NETWORK_QUEUE_MAX_WAIT_MS  50    // Max wait to enqueue network message
-#define SERVER_UPLOAD_IMAGE_URL "http://192.168.0.125:8000/api/device/file/image"
+#define SERVER_UPLOAD_IMAGE_URL "/api/devices/file/image"
 
 // --- System Settings ---
+#define DEVICE_NAME             "ESP32_Cam_01"
 #define CAMERA_CAPTURE_INTERVAL_MS  5000  // Capture every 5 seconds
 #define CAMERA_JPEG_QUALITY        12    // 0-63 Lower means better quality
 #define CAMERA_FRAME_SIZE         FRAMESIZE_QVGA  // 320x240

@@ -15,6 +15,8 @@ void setup() {
     Serial.begin(115200);
     networkQueue = xQueueCreate(5, sizeof(NetworkMessage));
 
+    pinMode(LED_FLASH_GPIO_NUM, OUTPUT);
+
     xTaskCreatePinnedToCore(
         Task_Network, "Network", 
         8192, NULL,   // Large stack for HTTP/SSL
@@ -29,4 +31,7 @@ void setup() {
     
     // Delete "setup/loop" task to save RAM
     vTaskDelete(NULL);
+}
+void loop() {
+    // Empty. Everything is handled in tasks.
 }
