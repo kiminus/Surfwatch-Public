@@ -32,6 +32,4 @@ void setup() {
     // Delete "setup/loop" task to save RAM
     vTaskDelete(NULL);
 }
-void loop() {
-    // Empty. Everything is handled in tasks.
-}
+void loop() {}

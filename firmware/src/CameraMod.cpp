@@ -38,27 +38,22 @@ void Task_Camera(void *pvParameters) {
     initCamera();
     
     while (true) {
-        // 1. Capture
         camera_fb_t *fb = esp_camera_fb_get();
         if (!fb) {
             Serial.println("Capture failed");
-            vTaskDelay(NETWORK_QUEUE_MAX_WAIT_MS / portTICK_PERIOD_MS);
+            vTaskDelay(pdTICKS_TO_MS(CAMERA_CAPTURE_INTERVAL_MS));
             continue;
         }
 
-        // 2. Wrap Message
         NetworkMessage msg;
         msg.type = MSG_IMAGE_UPLOAD;
         msg.payload = (void*)fb; // Pass ownership to Network Task
 
-        // 3. Send to Queue
-        // Wait 50ms for space. If full, DROP frame and release memory immediately.
         if (xQueueSend(networkQueue, &msg, NETWORK_QUEUE_MAX_WAIT_MS / portTICK_PERIOD_MS) != pdTRUE) {
             Serial.println("NetQueue Full - Dropping Frame");
             esp_camera_fb_return(fb); 
         }
 
-        // 4. Interval (5 seconds)
         vTaskDelay(pdMS_TO_TICKS(CAMERA_CAPTURE_INTERVAL_MS));
     }
 }

@@ -1,17 +1,14 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
-#include <PubSubClient.h> // Requires PubSubClient Library
 #include "Config.h"
 #include "Shared.h"
 #include "Secrets.h"
 
 WiFiClient espClient;
-PubSubClient mqttClient(espClient);
 
 void executeCommand(String cmd) {
     cmd.trim(); // Remove whitespace just in case
     Serial.println("[HTTP] Executing Command: " + cmd);
-    // --- LED States ---
     if (cmd == "SET_LED_STATE_ON") {
         Serial.println("Action: LED ON");
         digitalWrite(LED_FLASH_GPIO_NUM, HIGH);
@@ -22,20 +19,14 @@ void executeCommand(String cmd) {
 
     } else if (cmd == "SET_LED_STATE_BLINK") {
         Serial.println("Action: LED Blinking");
-        // enableBlinkMode();
-
-    // --- Power & System (Grouped Synonyms) ---
     } else if (cmd == "POWER_ON") {
         Serial.println("Action: System Wake");
-        
     } else if (cmd == "POWER_OFF") {
         Serial.println("Action: System Sleep");
         esp_deep_sleep_start();
-
     } else if (cmd == "REBOOT") {
         Serial.println("Action: Rebooting...");
         ESP.restart();
-    // --- Default / Unknown ---
     } else {
         Serial.print("Unknown Command: ");
         Serial.println(cmd);
@@ -49,7 +40,6 @@ void uploadImage(camera_fb_t* fb) {
     http.begin(String(SERVER_BASE_URL) + String(SERVER_UPLOAD_IMAGE_URL));
     http.addHeader("Content-Type", "image/jpeg");
 
-    // --- ADD CUSTOM HEADERS HERE ---
     http.addHeader("X-Device-ID", DEVICE_NAME);
     http.addHeader("X-Timestamp", String(millis()));
 
@@ -69,11 +59,9 @@ void uploadImage(camera_fb_t* fb) {
         int endIndex = payload.indexOf(';');
         
         while (endIndex != -1) {
-            // Extract single command
             String cmd = payload.substring(startIndex, endIndex);
             executeCommand(cmd);
             
-            // Move to next
             startIndex = endIndex + 1;
             endIndex = payload.indexOf(';', startIndex);
         }
@@ -90,7 +78,6 @@ void uploadImage(camera_fb_t* fb) {
 
 // --- MAIN TASK ---
 void Task_Network(void *pvParameters) {
-    // 1. Setup WiFi
     Serial.println("Connecting to WiFi..., SSID: " + String(WIFI_SSID) + ", PASS: " + String(WIFI_PASS));
     WiFi.begin(WIFI_SSID, WIFI_PASS);
     while (WiFi.status() != WL_CONNECTED) {
@@ -102,7 +89,6 @@ void Task_Network(void *pvParameters) {
     NetworkMessage msg;
 
     while (true) {
-        // --- Process Queue (The Consumer) ---
         if (xQueueReceive(networkQueue, &msg, 100 / portTICK_PERIOD_MS) == pdTRUE) {
             
             switch (msg.type) {
