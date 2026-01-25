@@ -18,18 +18,22 @@
 #define VSYNC_GPIO_NUM    25
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
+#define LED_RED_GPIO_NUM  33
+#define LED_FLASH_GPIO_NUM  4
 
 // --- WIFI & SERVER ---
-#define WIFI_SSID       "YourWiFiName"
-#define WIFI_PASS       "YourWiFiPass"
+#define WIFI_SSID       "UCScamDeigo"
+#define WIFI_PASS       "mainwater154"
 
-// HTTP (For Images)
-#define SERVER_UPLOAD_URL "http://192.168.1.100:5000/api/surfwatch/cam"
+// HTTP
+#define NETWORK_QUEUE_MAX_SIZE 5
+#define NETWORK_QUEUE_MAX_WAIT_MS  50    // Max wait to enqueue network message
+#define SERVER_UPLOAD_IMAGE_URL "http://192.168.0.125:8000/api/device/file/image"
 
-// MQTT (For Control/Status)
-#define MQTT_SERVER     "mqtt.example.com"
-#define MQTT_PORT       1883
-#define MQTT_TOPIC_CMD  "device/surfwatch/cmd"
-#define MQTT_TOPIC_STAT "device/surfwatch/status"
+// --- System Settings ---
+#define CAMERA_CAPTURE_INTERVAL_MS  5000  // Capture every 5 seconds
+#define CAMERA_JPEG_QUALITY        12    // 0-63 Lower means better quality
+#define CAMERA_FRAME_SIZE         FRAMESIZE_QVGA  // 320x240
+#define CAMERA_FB_COUNT           1     // Number of frame buffers
 
 #endif

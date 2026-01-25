@@ -12,32 +12,81 @@ void uploadImage(camera_fb_t* fb) {
     if(WiFi.status() != WL_CONNECTED) return;
     
     HTTPClient http;
-    http.begin(SERVER_UPLOAD_URL);
+    http.begin(SERVER_UPLOAD_IMAGE_URL);
     http.addHeader("Content-Type", "image/jpeg");
-    
+
+    // --- ADD CUSTOM HEADERS HERE ---
+    http.addHeader("X-Device-ID", "ESP32_Cam_01");
+    http.addHeader("X-Timestamp", String(millis()));
+
     int httpResponse = http.POST(fb->buf, fb->len);
-    
-    if (httpResponse > 0) {
-        Serial.printf("[HTTP] Upload success: %d\n", httpResponse);
+    if (httpResponse == 200) {
+        String payload = http.getString(); // Example: "BLINK;REBOOT;OPEN_VALVE"
+        
+        Serial.println("[HTTP] Raw Commands: " + payload);
+
+        if (payload == "NONE" || payload.length() == 0) {
+            http.end(); 
+            return;
+        }
+
+        // --- PARSING LOGIC (Split by ';') ---
+        int startIndex = 0;
+        int endIndex = payload.indexOf(';');
+        
+        while (endIndex != -1) {
+            // Extract single command
+            String cmd = payload.substring(startIndex, endIndex);
+            executeCommand(cmd);
+            
+            // Move to next
+            startIndex = endIndex + 1;
+            endIndex = payload.indexOf(';', startIndex);
+        }
+        
+        // Catch the last command (after the last ';')
+        String lastCmd = payload.substring(startIndex);
+        if (lastCmd.length() > 0) executeCommand(lastCmd);
+        
     } else {
         Serial.printf("[HTTP] Error: %s\n", http.errorToString(httpResponse).c_str());
     }
     http.end();
 }
 
-// --- HELPER: Publish Status (MQTT) ---
-void sendStatus(StatusPayload* status) {
-    if (!mqttClient.connected()) return;
-    
-    char jsonBuffer[128];
-    snprintf(jsonBuffer, sizeof(jsonBuffer), 
-             "{\"battery\": %d, \"wifi\": %d, \"uptime\": %lu}", 
-             status->batteryLevel, status->wifiSignal, status->uptime);
-             
-    mqttClient.publish(MQTT_TOPIC_STAT, jsonBuffer);
-    Serial.println("[MQTT] Status Published");
-}
+void executeCommand(String cmd) {
+    cmd.trim(); // Remove whitespace just in case
+    Serial.println("[HTTP] Executing Command: " + cmd);
+    // --- LED States ---
+    if (cmd == "SET_LED_STATE_ON") {
+        Serial.println("Action: LED ON");
+        digitalWrite(LED_FLASH_GPIO_NUM, HIGH);
 
+    } else if (cmd == "SET_LED_STATE_OFF") {
+        Serial.println("Action: LED OFF");
+        digitalWrite(LED_FLASH_GPIO_NUM, LOW);
+
+    } else if (cmd == "SET_LED_STATE_BLINK") {
+        Serial.println("Action: LED Blinking");
+        // enableBlinkMode();
+
+    // --- Power & System (Grouped Synonyms) ---
+    } else if (cmd == "POWER_ON") {
+        Serial.println("Action: System Wake");
+        
+    } else if (cmd == "POWER_OFF") {
+        Serial.println("Action: System Sleep");
+        esp_deep_sleep_start();
+
+    } else if (cmd == "REBOOT") {
+        Serial.println("Action: Rebooting...");
+        ESP.restart();
+    // --- Default / Unknown ---
+    } else {
+        Serial.print("Unknown Command: ");
+        Serial.println(cmd);
+    }
+}
 // --- MAIN TASK ---
 void Task_Network(void *pvParameters) {
     // 1. Setup WiFi
@@ -48,24 +97,10 @@ void Task_Network(void *pvParameters) {
     }
     Serial.println("\nWiFi Connected");
 
-    // 2. Setup MQTT
-    mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
-    // mqttClient.setCallback(callback); // Add callback for incoming commands
-
     NetworkMessage msg;
 
     while (true) {
-        // --- A. MQTT Maintenance ---
-        // Ensure we are connected for control/status messages
-        if (!mqttClient.connected()) {
-            if (mqttClient.connect("ESP32CamClient")) {
-                mqttClient.subscribe(MQTT_TOPIC_CMD);
-            }
-        }
-        mqttClient.loop(); // Process incoming MQTT messages
-
-        // --- B. Process Queue (The Consumer) ---
-        // Wait up to 100ms for a message. If nothing, loop back to check MQTT.
+        // --- Process Queue (The Consumer) ---
         if (xQueueReceive(networkQueue, &msg, 100 / portTICK_PERIOD_MS) == pdTRUE) {
             
             switch (msg.type) {
@@ -78,7 +113,6 @@ void Task_Network(void *pvParameters) {
 
                 case MSG_STATUS_UPDATE: {
                     StatusPayload* status = (StatusPayload*)msg.payload;
-                    sendStatus(status);     // Do the light MQTT work
                     delete status;          // FREE MEMORY (Crucial!)
                     break;
                 }

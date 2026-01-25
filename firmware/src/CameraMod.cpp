@@ -25,9 +25,9 @@ void initCamera() {
     config.pixel_format = PIXFORMAT_JPEG;
     
     // Adjust quality based on needs
-    config.frame_size = FRAMESIZE_QVGA;
-    config.jpeg_quality = 12; 
-    config.fb_count = 1;
+    config.frame_size = CAMERA_FRAME_SIZE;
+    config.jpeg_quality = CAMERA_JPEG_QUALITY; 
+    config.fb_count = CAMERA_FB_COUNT;
 
     if (esp_camera_init(&config) != ESP_OK) {
         Serial.println("Camera Init Failed");
@@ -42,7 +42,7 @@ void Task_Camera(void *pvParameters) {
         camera_fb_t *fb = esp_camera_fb_get();
         if (!fb) {
             Serial.println("Capture failed");
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            vTaskDelay(NETWORK_QUEUE_MAX_WAIT_MS / portTICK_PERIOD_MS);
             continue;
         }
 
@@ -53,12 +53,12 @@ void Task_Camera(void *pvParameters) {
 
         // 3. Send to Queue
         // Wait 50ms for space. If full, DROP frame and release memory immediately.
-        if (xQueueSend(networkQueue, &msg, 50 / portTICK_PERIOD_MS) != pdTRUE) {
+        if (xQueueSend(networkQueue, &msg, NETWORK_QUEUE_MAX_WAIT_MS / portTICK_PERIOD_MS) != pdTRUE) {
             Serial.println("NetQueue Full - Dropping Frame");
             esp_camera_fb_return(fb); 
         }
 
         // 4. Interval (5 seconds)
-        vTaskDelay(5000 / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(CAMERA_CAPTURE_INTERVAL_MS));
     }
 }
