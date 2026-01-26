@@ -28,8 +28,6 @@ void setup() {
         4096, NULL, 
         2, &hCamera, 1  // Higher priority than Network to ensure capture timing
     );
-    
-    // Delete "setup/loop" task to save RAM
     vTaskDelete(NULL);
 }
 void loop() {}

@@ -6,17 +6,45 @@
 
 WiFiClient espClient;
 
+void configHTTPRequest(HTTPClient& http, String url) {
+    http.begin(url);
+    http.addHeader("X-Device-ID", DEVICE_NAME);
+    http.addHeader("X-Timestamp", String(millis()));
+}
+
+bool checkWifiConnection() {
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("WiFi Disconnected. Attempting Reconnect...");
+        WiFi.disconnect();
+        WiFi.reconnect();
+        unsigned long startAttemptTime = millis();
+
+        // Wait up to 10 seconds for connection
+        while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < WIFI_RECONNECT_MAX_TIME_MS) {
+            vTaskDelay(pdMS_TO_TICKS(WIFI_RECONNECT_RETRY_INTERVAL_MS));
+            Serial.print(".");
+        }
+
+        if (WiFi.status() == WL_CONNECTED) {
+            Serial.println("\nReconnected to WiFi");
+            return true;
+        } else {
+            Serial.println("\nFailed to reconnect to WiFi");
+            return false;
+        }
+    }
+    return true;
+}
+
 void executeCommand(String cmd) {
     cmd.trim(); // Remove whitespace just in case
     Serial.println("[HTTP] Executing Command: " + cmd);
     if (cmd == "SET_LED_STATE_ON") {
         Serial.println("Action: LED ON");
         digitalWrite(LED_FLASH_GPIO_NUM, HIGH);
-
     } else if (cmd == "SET_LED_STATE_OFF") {
         Serial.println("Action: LED OFF");
         digitalWrite(LED_FLASH_GPIO_NUM, LOW);
-
     } else if (cmd == "SET_LED_STATE_BLINK") {
         Serial.println("Action: LED Blinking");
     } else if (cmd == "POWER_ON") {
@@ -27,25 +55,17 @@ void executeCommand(String cmd) {
     } else if (cmd == "REBOOT") {
         Serial.println("Action: Rebooting...");
         ESP.restart();
-    } else {
+    } else if (cmd == "REPORT") {
+        Serial.println("Action: Status Report Requested");
+    }else {
         Serial.print("Unknown Command: ");
         Serial.println(cmd);
     }
 }
 
-void uploadImage(camera_fb_t* fb) {
-    if(WiFi.status() != WL_CONNECTED) return;
-    
-    HTTPClient http;
-    http.begin(String(SERVER_BASE_URL) + String(SERVER_UPLOAD_IMAGE_URL));
-    http.addHeader("Content-Type", "image/jpeg");
-
-    http.addHeader("X-Device-ID", DEVICE_NAME);
-    http.addHeader("X-Timestamp", String(millis()));
-
-    int httpResponse = http.POST(fb->buf, fb->len);
+void handleHTTPResponse(int httpResponse, HTTPClient& http) {
     if (httpResponse == 200) {
-        String payload = http.getString(); // Example: "BLINK;REBOOT;OPEN_VALVE"
+        String payload = http.getString(); // Example: "BLINK;REBOOT;REPORT"
         
         Serial.println("[HTTP] Raw Commands: " + payload);
 
@@ -66,13 +86,23 @@ void uploadImage(camera_fb_t* fb) {
             endIndex = payload.indexOf(';', startIndex);
         }
         
-        // Catch the last command (after the last ';')
         String lastCmd = payload.substring(startIndex);
         if (lastCmd.length() > 0) executeCommand(lastCmd);
         
     } else {
         Serial.printf("[HTTP] Error: %s\n", http.errorToString(httpResponse).c_str());
     }
+}
+
+void uploadImage(camera_fb_t* fb) {
+    if(!checkWifiConnection()) return;
+    
+    HTTPClient http;
+    configHTTPRequest(http, String(SERVER_BASE_URL) + String(SERVER_UPLOAD_IMAGE_URL));
+    http.addHeader("Content-Type", "image/jpeg");
+    
+    int httpResponse = http.POST(fb->buf, fb->len);
+    handleHTTPResponse(httpResponse, http);
     http.end();
 }
 

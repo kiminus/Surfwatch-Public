@@ -24,6 +24,8 @@
 // HTTP
 #define NETWORK_QUEUE_MAX_SIZE 5
 #define NETWORK_QUEUE_MAX_WAIT_MS  50    // Max wait to enqueue network message
+#define WIFI_RECONNECT_MAX_TIME_MS 10000
+#define WIFI_RECONNECT_RETRY_INTERVAL_MS 1000
 #define SERVER_UPLOAD_IMAGE_URL "/api/devices/file/image"
 
 // --- System Settings ---
