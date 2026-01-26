@@ -1,8 +1,12 @@
 
-* **MQTT Protocol Design:**
-  * Define your topic structure (e.g., `surfwatch/cam_01/stream` for images, `surfwatch/cam_01/telemetry` for temp/rssi).
-  * Explain why you chose MQTT over HTTP (lower overhead, keep-alive session, better for unstable IoT connections).
-* **The AI Pipeline:**
-  * Describe the image decoding process: `Base64 String -> Numpy Array -> OpenCV Decode`.
-  * **YOLO Integration:** Explain that you run inference on the received frame to get bounding boxes (class: "person").
-  * **Optimization:** Mention if you used `YOLOv8-nano` or `tiny` to optimize for latency on the server side.
+### The AI pipeline
+
+```
+0: 480x640 1 person, 37.5ms
+Speed: 1.2ms preprocess, 37.5ms inference, 0.4ms postprocess per image at shape (1, 3, 480, 640)
+Results saved to ......
+Detection Results: Found 1 objects
+[IoT] Processed Image from ESP32_Cam_01, Detections: 1
+INFO:     192.168.0.171:63600 - "POST /api/devices/file/image HTTP/1.1" 200 OK
+```
+

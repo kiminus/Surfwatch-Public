@@ -2,8 +2,6 @@
 
 [Link to the Original Repo](https://github.com/kiminus/SurfWatch)
 
-[Link to the Demo Site](https://kiminus.github.io/SurfWatch/)
-
 This is a demostration repo for the Surfwatch project. The source code is available upon request.
 
 !!! warning "Note"

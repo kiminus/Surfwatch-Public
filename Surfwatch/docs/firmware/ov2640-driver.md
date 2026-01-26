@@ -1,1 +1,0 @@
-**DMA Explanation:** Briefly explain that the camera interface uses I2S (Inter-IC Sound) in parallel mode with DMA (Direct Memory Access). This allows image data to move from the sensor to PSRAM without bogging down the CPU, leaving the CPU free to handle the WiFi stack.
