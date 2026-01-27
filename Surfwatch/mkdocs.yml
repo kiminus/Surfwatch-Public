@@ -85,7 +85,7 @@ nav:
   - Architecture: architecture.md
   - Firmware Engineering:
       - ESP32 & FreeRTOS: firmware/freertos-implementation.md # HIGHLIGHT: Explain Tasks vs Queues here
-      - Memory Management: firmware/memory-optimization.md # HIGHLIGHT: Explain DMA & PSRAM usage
+      - Optimizations: firmware/optimization.md # HIGHLIGHT: Explain DMA & PSRAM usage
   - AI & Backend: backend.md
   - Frontend: frontend.md
   - Results: results.md

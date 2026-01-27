@@ -42,7 +42,7 @@ sequenceDiagram
 
 Since this esp32 has dual cores, we assigned the high priority camera capture task to Core 1, while the network transmission task runs on Core 0.
 
-They will be communicated via a **FreeRTOS** Queue in a producer-consumer pattern. The camera task (producer) captures images and places pointers to the image buffers into the queue. The network task (consumer) retrieves these pointers from the queue and send the HTTP request. This ensures there is zero data copying between tasks, [optimizing both memory usage and CPU cycles](memory-optimization.md).
+They will be communicated via a **FreeRTOS** Queue in a producer-consumer pattern. The camera task (producer) captures images and places pointers to the image buffers into the queue. The network task (consumer) retrieves these pointers from the queue and send the HTTP request. This ensures there is zero data copying between tasks, [optimizing both memory usage and CPU cycles](optimization.md).
 
 ```C
 void Task_Camera(void *pvParameters) {

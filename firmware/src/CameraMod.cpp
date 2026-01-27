@@ -38,6 +38,7 @@ NetworkMessage createImageUploadMessage(camera_fb_t* fb) {
     NetworkMessage msg;
     msg.type = MSG_IMAGE_UPLOAD;
     msg.payload = (void*)fb; // Pass ownership to Network Task
+    msg.payloadCreateTime = millis();
     return msg;
 }
 

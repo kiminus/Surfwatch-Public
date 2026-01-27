@@ -18,9 +18,12 @@ struct StatusPayload {
 
 struct NetworkMessage {
     NetMsgType type;
+    unsigned long payloadCreateTime;
+    unsigned long networkSendTime;
+    unsigned long networkReceiveTime;
+    unsigned long commandEndTime;
     void* payload;
 };
 
 extern QueueHandle_t networkQueue;
-
 #endif

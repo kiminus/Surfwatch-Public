@@ -5,13 +5,7 @@
 #include "Secrets.h"
 
 WiFiClient espClient;
-
-void configHTTPRequest(HTTPClient& http, String url) {
-    http.begin(url);
-    http.addHeader("X-Device-ID", DEVICE_NAME);
-    http.addHeader("X-Timestamp", String(millis()));
-}
-
+HTTPClient http;
 bool checkWifiConnection() {
     if (WiFi.status() != WL_CONNECTED) {
         Serial.println("WiFi Disconnected. Attempting Reconnect...");
@@ -70,7 +64,6 @@ void handleHTTPResponse(int httpResponse, HTTPClient& http) {
         Serial.println("[HTTP] Raw Commands: " + payload);
 
         if (payload == "NONE" || payload.length() == 0) {
-            http.end(); 
             return;
         }
 
@@ -91,19 +84,43 @@ void handleHTTPResponse(int httpResponse, HTTPClient& http) {
         
     } else {
         Serial.printf("[HTTP] Error: %s\n", http.errorToString(httpResponse).c_str());
+        http.end();
     }
 }
 
-void uploadImage(camera_fb_t* fb) {
-    if(!checkWifiConnection()) return;
+void uploadImage(NetworkMessage& msg) {
+    if(!checkWifiConnection()) {
+        return;
+    }
     
-    HTTPClient http;
-    configHTTPRequest(http, String(SERVER_BASE_URL) + String(SERVER_UPLOAD_IMAGE_URL));
-    http.addHeader("Content-Type", "image/jpeg");
+    if (!http.connected()) {
+        http.end(); // Clean up previous connection
+        Serial.println("[HTTP] establishing new connection...");
+        http.setReuse(true);
+        http.begin(String(SERVER_BASE_URL) + String(SERVER_UPLOAD_IMAGE_URL));
+        http.addHeader("Content-Type", "image/jpeg");
+        http.addHeader("Connection", "keep-alive");
+    }
     
+    msg.networkSendTime = millis();
+    camera_fb_t* fb = (camera_fb_t*)msg.payload;
+
     int httpResponse = http.POST(fb->buf, fb->len);
+    
+    msg.networkReceiveTime = millis();
     handleHTTPResponse(httpResponse, http);
-    http.end();
+    msg.commandEndTime = millis();
+}
+
+void printNetworkMessageTimings(const NetworkMessage& msg) {
+    Serial.println("---- Network Message Timings ----");
+    Serial.printf("Payload Created At: %lu ms\n", msg.payloadCreateTime);
+    Serial.printf("Network Send Time After Payload Creation: %lu ms\n", msg.networkSendTime - msg.payloadCreateTime);
+    Serial.printf("Network Receive Time - After Send: %lu ms\n", msg.networkReceiveTime - msg.networkSendTime);
+    Serial.printf("Command End Time - After Receive: %lu ms\n", msg.commandEndTime - msg.networkReceiveTime);
+    Serial.printf("Total Time from Payload Creation to Command End: %lu ms\n", 
+                  msg.commandEndTime - msg.payloadCreateTime);
+    Serial.println("---------------------------------");
 }
 
 // --- MAIN TASK ---
@@ -117,24 +134,24 @@ void Task_Network(void *pvParameters) {
     Serial.println("\nWiFi Connected");
 
     NetworkMessage msg;
+    http.setTimeout(5000);
 
     while (true) {
         if (xQueueReceive(networkQueue, &msg, 100 / portTICK_PERIOD_MS) == pdTRUE) {
-            
             switch (msg.type) {
                 case MSG_IMAGE_UPLOAD: {
-                    camera_fb_t* fb = (camera_fb_t*)msg.payload;
-                    uploadImage(fb);        // Do the heavy HTTP work
-                    esp_camera_fb_return(fb); // FREE MEMORY (Crucial!)
+                    uploadImage(msg);        // Do the heavy HTTP work
+                    esp_camera_fb_return((camera_fb_t*)msg.payload);
                     break;
                 }
 
                 case MSG_STATUS_UPDATE: {
                     StatusPayload* status = (StatusPayload*)msg.payload;
-                    delete status;          // FREE MEMORY (Crucial!)
+                    delete status;        
                     break;
                 }
             }
+            printNetworkMessageTimings(msg);
         }
     }
 }
