@@ -186,9 +186,6 @@ def receive_image(...):
     return formatted_pending_commands
 ```
 
-```mermaid
-```
-
 # Memory optimization
 
 The hardware is a ESP32-CAM
