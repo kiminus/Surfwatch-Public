@@ -27,6 +27,7 @@ bool checkWifiConnection() {
             return false;
         }
     }
+    Serial.printf("[WiFi] Status: %d dBm\n", WiFi.RSSI());
     return true;
 }
 
@@ -60,7 +61,7 @@ void executeCommand(String cmd) {
 void handleHTTPResponse(int httpResponse, HTTPClient& http) {
     String payload = http.getString(); // Example: "BLINK;REBOOT;REPORT"
     
-    Serial.println("[HTTP] Raw Commands: " + payload);
+    // Serial.println("[HTTP] Raw Commands: " + payload);
 
     if (payload == "NONE" || payload.length() == 0) {
         return;
@@ -139,6 +140,7 @@ void Task_Network(void *pvParameters) {
 
     while (true) {
         if (xQueueReceive(networkQueue, &msg, 100 / portTICK_PERIOD_MS) == pdTRUE) {
+            Serial.println("Dequeued message, queue size: " + String(uxQueueMessagesWaiting(networkQueue)));
             switch (msg.type) {
                 case MSG_IMAGE_UPLOAD: {
                     uploadImage(msg);        // Do the heavy HTTP work

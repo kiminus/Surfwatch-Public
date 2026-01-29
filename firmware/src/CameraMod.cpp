@@ -60,6 +60,8 @@ void Task_Camera(void *pvParameters) {
             esp_camera_fb_return(fb); 
         }
 
+        Serial.println("Enqueue image, queue size: " + String(uxQueueMessagesWaiting(networkQueue)));
+
         vTaskDelay(pdMS_TO_TICKS(CAMERA_CAPTURE_INTERVAL_MS));
     }
 }
