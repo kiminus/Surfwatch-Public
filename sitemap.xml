@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://kiminus.github.io/Surfwatch-Public/</loc>
+         <lastmod>2026-01-29</lastmod>
+    </url>
+    <url>
+         <loc>https://kiminus.github.io/Surfwatch-Public/architecture/</loc>
+         <lastmod>2026-01-29</lastmod>
+    </url>
+    <url>
+         <loc>https://kiminus.github.io/Surfwatch-Public/backend/</loc>
+         <lastmod>2026-01-29</lastmod>
+    </url>
+    <url>
+         <loc>https://kiminus.github.io/Surfwatch-Public/frontend/</loc>
+         <lastmod>2026-01-29</lastmod>
+    </url>
+    <url>
+         <loc>https://kiminus.github.io/Surfwatch-Public/results/</loc>
+         <lastmod>2026-01-29</lastmod>
+    </url>
+    <url>
+         <loc>https://kiminus.github.io/Surfwatch-Public/firmware/freertos-implementation/</loc>
+         <lastmod>2026-01-29</lastmod>
+    </url>
+    <url>
+         <loc>https://kiminus.github.io/Surfwatch-Public/firmware/optimization/</loc>
+         <lastmod>2026-01-29</lastmod>
+    </url>
+</urlset>
