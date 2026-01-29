@@ -58,40 +58,41 @@ void executeCommand(String cmd) {
 }
 
 void handleHTTPResponse(int httpResponse, HTTPClient& http) {
-    if (httpResponse == 200) {
-        String payload = http.getString(); // Example: "BLINK;REBOOT;REPORT"
-        
-        Serial.println("[HTTP] Raw Commands: " + payload);
+    String payload = http.getString(); // Example: "BLINK;REBOOT;REPORT"
+    
+    Serial.println("[HTTP] Raw Commands: " + payload);
 
-        if (payload == "NONE" || payload.length() == 0) {
-            return;
-        }
-
-        // --- PARSING LOGIC (Split by ';') ---
-        int startIndex = 0;
-        int endIndex = payload.indexOf(';');
-        
-        while (endIndex != -1) {
-            String cmd = payload.substring(startIndex, endIndex);
-            executeCommand(cmd);
-            
-            startIndex = endIndex + 1;
-            endIndex = payload.indexOf(';', startIndex);
-        }
-        
-        String lastCmd = payload.substring(startIndex);
-        if (lastCmd.length() > 0) executeCommand(lastCmd);
-        
-    } else {
-        Serial.printf("[HTTP] Error: %s\n", http.errorToString(httpResponse).c_str());
-        http.end();
+    if (payload == "NONE" || payload.length() == 0) {
+        return;
     }
+    // --- PARSING LOGIC (Split by ';') ---
+    int startIndex = 0;
+    int endIndex = payload.indexOf(';');
+    
+    while (endIndex != -1) {
+        String cmd = payload.substring(startIndex, endIndex);
+        executeCommand(cmd);
+        
+        startIndex = endIndex + 1;
+        endIndex = payload.indexOf(';', startIndex);
+    }
+    
+    String lastCmd = payload.substring(startIndex);
+    if (lastCmd.length() > 0) executeCommand(lastCmd);
 }
 
 void uploadImage(NetworkMessage& msg) {
     if(!checkWifiConnection()) {
+        msg.state = "FAILED_WIFI";
+        Serial.println("[METRIC] State: FAILED_WIFI");
         return;
     }
+
+    uint32_t freeHeapBefore = ESP.getFreeHeap();
+    camera_fb_t* fb = (camera_fb_t*)msg.payload;
+    size_t dataSize = fb->len;
+    msg.dataSize = dataSize;
+    msg.freeHeapBefore = freeHeapBefore;
     
     if (!http.connected()) {
         http.end(); // Clean up previous connection
@@ -100,29 +101,29 @@ void uploadImage(NetworkMessage& msg) {
         http.begin(String(SERVER_BASE_URL) + String(SERVER_UPLOAD_IMAGE_URL));
         http.addHeader("Content-Type", "image/jpeg");
         http.addHeader("Connection", "keep-alive");
+        http.addHeader("X-Device-ID", DEVICE_NAME);
     }
     
-    msg.networkSendTime = millis();
-    camera_fb_t* fb = (camera_fb_t*)msg.payload;
+    http.addHeader("X-Free-Heap", String(freeHeapBefore));
 
-    int httpResponse = http.POST(fb->buf, fb->len);
-    
-    msg.networkReceiveTime = millis();
-    handleHTTPResponse(httpResponse, http);
-    msg.commandEndTime = millis();
+    unsigned long startNetworkTime = millis();
+    int httpResponse = http.POST(fb->buf, fb->len); //BLOCKING!
+    msg.latency = millis() - startNetworkTime;
+
+    if (httpResponse > 0) {
+        msg.state= "SUCCESS";
+        handleHTTPResponse(httpResponse, http);
+    } else {
+        msg.state = "FAILED_HTTP";
+        Serial.printf("[HTTP] Error: %s\n", http.errorToString(httpResponse).c_str());
+        http.end();
+    }
+    msg.payloadEndTime = millis();
 }
-
-void printNetworkMessageTimings(const NetworkMessage& msg) {
-    Serial.println("---- Network Message Timings ----");
-    Serial.printf("Payload Created At: %lu ms\n", msg.payloadCreateTime);
-    Serial.printf("Network Send Time After Payload Creation: %lu ms\n", msg.networkSendTime - msg.payloadCreateTime);
-    Serial.printf("Network Receive Time - After Send: %lu ms\n", msg.networkReceiveTime - msg.networkSendTime);
-    Serial.printf("Command End Time - After Receive: %lu ms\n", msg.commandEndTime - msg.networkReceiveTime);
-    Serial.printf("Total Time from Payload Creation to Command End: %lu ms\n", 
-                  msg.commandEndTime - msg.payloadCreateTime);
-    Serial.println("---------------------------------");
+void logPerformanceMetrics(const NetworkMessage& msg) {
+    Serial.printf("[METRIC] State:%s | Size:%u B | Latency:%lu ms | Heap:%u B | Lifecycle: %lu ms\n", 
+                      msg.state.c_str(), msg.dataSize, msg.latency, msg.freeHeapBefore, msg.payloadEndTime - msg.payloadCreateTime);
 }
-
 // --- MAIN TASK ---
 void Task_Network(void *pvParameters) {
     Serial.println("Connecting to WiFi..., SSID: " + String(WIFI_SSID) + ", PASS: " + String(WIFI_PASS));
@@ -151,7 +152,7 @@ void Task_Network(void *pvParameters) {
                     break;
                 }
             }
-            printNetworkMessageTimings(msg);
+            logPerformanceMetrics(msg);
         }
     }
 }

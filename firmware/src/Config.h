@@ -32,7 +32,7 @@
 #define DEVICE_NAME             "ESP32_Cam_01"
 #define CAMERA_CAPTURE_INTERVAL_MS  5000  // Capture every 5 seconds
 #define CAMERA_JPEG_QUALITY        12    // 0-63 Lower means better quality
-#define CAMERA_FRAME_SIZE         FRAMESIZE_QVGA  // 320x240
-#define CAMERA_FB_COUNT           1     // Number of frame buffers
+#define CAMERA_FRAME_SIZE         FRAMESIZE_HD  // 1280x720
+#define CAMERA_FB_COUNT           2     // Number of frame buffers
 
 #endif

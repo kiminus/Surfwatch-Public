@@ -18,10 +18,12 @@ struct StatusPayload {
 
 struct NetworkMessage {
     NetMsgType type;
+    String state = "PENDING";
     unsigned long payloadCreateTime;
-    unsigned long networkSendTime;
-    unsigned long networkReceiveTime;
-    unsigned long commandEndTime;
+    unsigned long latency;
+    unsigned long dataSize;
+    unsigned long freeHeapBefore;
+    unsigned long payloadEndTime;
     void* payload;
 };
 

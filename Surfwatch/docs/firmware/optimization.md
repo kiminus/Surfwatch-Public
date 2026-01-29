@@ -186,29 +186,48 @@ def receive_image(...):
     return formatted_pending_commands
 ```
 
+## Measure Latency After Optimizations - HD Image
+
+in the real scenario, the image is at least HD (1280x720) resolution, so I also measured the latency with HD images
+
+here is the graph of latency measure on the ESP32 (which is the total latency) and on the server (which is only the server processing time):
+
+```mermaid
+xychart-beta
+    title "IoT Latency vs Server Latency (ms)"
+    x-axis "Request Index (Success Only)" 1 --> 94
+    y-axis "Latency (ms)" 0 --> 15000
+    line [4432, 9918, 9313, 12558, 7812, 11286, 7727, 8167, 6857, 6339, 6638, 6881, 5133, 3858, 2976, 1601, 1475, 2860, 3782, 3004, 3282, 3720, 2239, 1530, 2223, 1697, 2662, 2487, 3278, 3805, 3916, 1946, 1487, 4010, 2932, 3508, 3402, 4117, 2929, 2835, 4157, 3503, 2948, 3282, 1819, 1952, 3881, 5097, 4494, 709, 5146, 3121, 3964, 2356, 2547, 4314, 2945, 5045, 3171, 2201, 2809, 2995, 3146, 1872, 3592, 4479, 5109, 3236, 599, 3591, 2534, 1601, 1527, 2315, 3846, 2798, 2354, 3759, 3512, 2283, 5194, 2986, 3909, 3182, 2470, 2172, 2347, 2449, 886, 1235, 854, 1103, 487, 3932]
+    line [3129, 9249, 9024, 12482, 7740, 10044, 7568, 7980, 6708, 6296, 6218, 6504, 5061, 3793, 2849, 1498, 1441, 2807, 3706, 2673, 3237, 3675, 2188, 1464, 1653, 1640, 2575, 2463, 3114, 3746, 3852, 1920, 1447, 3963, 2887, 3427, 3362, 4068, 2892, 2779, 3559, 3467, 2901, 3248, 1762, 1926, 3786, 5025, 3850, 676, 5129, 3097, 3934, 2317, 2519, 4292, 2903, 4974, 2885, 2166, 2774, 2940, 3096, 1807, 3517, 3894, 5004, 3201, 562, 3521, 2507, 1564, 1495, 2273, 3780, 2697, 2321, 3732, 3447, 2201, 3516, 2959, 3780, 3158, 2441, 2144, 2274, 2420, 833, 1200, 783, 1061, 467, 3897]
+```
+
+Here is the difference between the IoT latency and the server latency (which is the network + overhead):
+
+```mermaid
+
+xychart-beta
+    title "Network Overhead (IoT Latency - Server Latency)"
+    x-axis "Request Index" 1 --> 94
+    y-axis "Net Overhead (ms)" 0 --> 1500
+    line [1303, 669, 289, 76, 72, 1242, 159, 187, 149, 43, 420, 377, 72, 65, 127, 103, 34, 53, 76, 331, 45, 45, 51, 66, 570, 57, 87, 24, 164, 59, 64, 26, 40, 47, 45, 81, 40, 49, 37, 56, 598, 36, 47, 34, 57, 26, 95, 72, 644, 33, 17, 24, 30, 39, 28, 22, 42, 71, 286, 35, 35, 55, 50, 65, 75, 585, 105, 35, 37, 70, 27, 37, 32, 42, 66, 101, 33, 27, 65, 82, 1678, 27, 129, 24, 29, 28, 73, 29, 53, 35, 71, 42, 20, 35]
+```
+
+
+
 # Memory optimization
 
-The hardware is a ESP32-CAM
+### Measure heap usage
 
-```
-00:38:39.540 > depth=13Guru Meditation Error: Core  0 panic'ed (Unhandled debug exception). 
-00:38:39.540 > Debug exception reason: Stack canary watchpoint triggered (Processing Task)
-```
+in fact, the baseline and the optimized heap usage are similar. I did not measure the baseline heap usage, but here is the final heap usage after all optimizations:
 
-### overhead of the Core Driver and logging
-
-To optimize the memory usage, I need to first know how much memory it is using by default. Here is the memory usage logging during only core task initialization:
-
-```
-00:26:50.797 > Starting processingTask to monitor stack usage...
-00:26:50.797 > [free stack: 1752 bytes]
-00:26:51.277 > [free stack: 568 bytes]
-00:26:52.277 > [free stack: 568 bytes]
+```mermaid
+xychart-beta
+    title "Free Heap Trend (Per Request ID)"
+    x-axis "Request ID" 1 --> 97
+    y-axis "Heap (Bytes)" 183000 --> 189000
+    line [188436, 187444, 187444, 185320, 185128, 185116, 185116, 185116, 183492, 185108, 185120, 185108, 185108, 185120, 185116, 185120, 185120, 185108, 185108, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185148, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185324, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185108, 185324, 185312, 185312, 185312, 185312, 185312, 185312, 185324]
 ```
 
-- initially allocateed 2048 bytes for processingTask
-- after initialization, only 1752 bytes left (296 bytes used)
-- after logging starts, only 568 bytes left (1184 bytes used)
-- so a reasonable estimate is that the core driver and logging uses about 1.2KB of stack memory
+The heap usage remains relatively stable throughout the requests, with minor fluctuations likely due to GC activity or temporary allocations. The free heap ranges from approximately 183,492 bytes to 188,436 bytes, indicating that there is no significant memory leak or excessive memory consumption during operation.
 
 ---
