@@ -1,0 +1,982 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://kiminus.github.io/Surfwatch-Public/firmware/optimization/">
+      
+      
+        <link rel="prev" href="../freertos-implementation/">
+      
+      
+        <link rel="next" href="../../backend/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Optimizations - Surfwatch Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://unpkg.com/katex@0/dist/katex.min.css">
+    
+      <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  <meta name="robots" content="noindex, nofollow">
+
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#latency-optimization" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Surfwatch Documentation" class="md-header__button md-logo" aria-label="Surfwatch Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Surfwatch Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Optimizations
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/kiminus/Surfwatch-Public" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Surfwatch Documentation" class="md-nav__button md-logo" aria-label="Surfwatch Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Surfwatch Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/kiminus/Surfwatch-Public" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Firmware Engineering
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Firmware Engineering
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../freertos-implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ESP32 & FreeRTOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Optimizations
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Optimizations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#baseline-latency-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Baseline Latency Analysis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Baseline Latency Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#esp-baseline-measurements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ESP: Baseline measurements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#remove-the-outliers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remove the Outliers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backend-baseline-measurements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend: Baseline measurements
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optimizations-keep-alive-http-persistent-connections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optimizations - Keep Alive &amp; HTTP Persistent Connections
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optimizations-asynchronous-server-task-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optimizations - Asynchronous Server Task flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#measure-latency-after-optimizations-hd-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Measure Latency After Optimizations - HD Image
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI & Backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../results/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Results
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="latency-optimization">Latency optimization</h1>
+<h2 id="baseline-latency-analysis">Baseline Latency Analysis</h2>
+<h3 id="esp-baseline-measurements"><a href="../../results/#baseline-latency-logs-esp">ESP: Baseline measurements</a></h3>
+<ul>
+<li>if the server is not step, the standard timeout for a network request is around 5 seconds, which conforms the default timeout setting:</li>
+</ul>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>18:56:57.784 &gt; [HTTP] Error: connection refused
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>18:56:57.784 &gt; ---- Network Message Timings ----
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>18:56:57.801 &gt; Payload Created At: 130391 ms
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>18:56:57.805 &gt; Network Send Time After Payload Creation: 1 ms
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>18:56:57.806 &gt; Network Receive Time - After Send: 5002 ms
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>18:56:57.810 &gt; Command End Time - After Receive: 0 ms
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>18:56:57.815 &gt; Total Time from Payload Creation to Command End: 5003 ms
+</span></code></pre></div>
+<ul>
+<li>the baseline lantency for a successful request when the server is idle is around 500 - 1450 ms, but we can see </li>
+</ul>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>20:04:00.583 &gt; [HTTP] Raw Commands: NONE
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>20:04:00.583 &gt; ---- Network Message Timings ----
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>20:04:00.587 &gt; Payload Created At: 311561 ms
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>20:04:00.589 &gt; Network Send Time After Payload Creation: 1 ms
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>20:04:00.596 &gt; Network Receive Time - After Send: 1364 ms
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>20:04:00.597 &gt; Command End Time - After Receive: 102 ms
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>20:04:00.601 &gt; Total Time from Payload Creation to Command End: 1467 ms
+</span></code></pre></div>
+<p>here is the graph of latency over time:</p>
+<pre class="mermaid"><code>xychart-beta
+    title "Network Latency (RTT) per Request"
+    x-axis "Request Index" 0 --&gt; 100
+    y-axis "Latency (ms)" 0 --&gt; 5200
+    line [375, 453, 338, 638, 628, 569, 1092, 298, 388, 378, 283, 605, 348, 522, 473, 679, 580, 628, 615, 465, 559, 865, 360, 987, 945, 636, 822, 591, 433, 1339, 1086, 778, 546, 801, 493, 1185, 648, 386, 416, 574, 2719, 824, 1127, 728, 867, 685, 1301, 1715, 505, 830, 571, 564, 935, 465, 742, 534, 625, 664, 574, 465, 828, 408, 270, 226, 625, 407, 515, 430, 799, 511, 515, 929, 532, 3448, 914, 365, 421, 716, 735, 232, 296, 208, 785, 334, 414, 553, 163, 229, 554, 732, 156, 909, 470, 842, 1418, 1441, 940, 477, 1107, 943, 913, 776, 1824, 5054, 2159, 1652, 307, 546, 406, 581, 769, 426, 1336, 767, 233, 672, 619, 912, 1246, 695, 1150, 948, 823, 2374, 526, 1593, 1206]</code></pre>
+<p>and here is the histogram of latency distribution:</p>
+<p><pre class="mermaid"><code>xychart-beta
+    title "Network Latency Histogram (RTT)"
+    x-axis "Latency Range (ms)" ["0–499","500–999","1000–1499","1500–1999","2000–2999","3000–3999","4000–5999"]
+    y-axis "Request Count" 0 --&gt; 60
+    bar [49, 59, 22, 10, 6, 2, 1]</code></pre>
+Analyzing the data, we have the following statistics:</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Minimum</td>
+<td>156 ms</td>
+</tr>
+<tr>
+<td>Maximum</td>
+<td>5054 ms</td>
+</tr>
+<tr>
+<td>Average (Mean)</td>
+<td>790 ms</td>
+</tr>
+<tr>
+<td>Median</td>
+<td>~622 ms</td>
+</tr>
+<tr>
+<td>Mode</td>
+<td>465 ms, 574 ms</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>the maximum latency of 5054ms is an outlier, so that indicates a case <strong>when the connection time out/packet loss happens</strong></li>
+<li>the average latency is <strong>right-skewed</strong> by the outliers, so median is a better representation of typical latency</li>
+<li>The high standard deviation of 680ms indicates extreme jitter, suggesting that there might be either network instability or instable request overhead.</li>
+<li>the minimum latency of 156ms <strong>indicates my system actually functions correctly, and can achieve low latency</strong>, confirming that the current bottlenecks are architectural rather than physical.</li>
+</ul>
+<h3 id="remove-the-outliers">Remove the Outliers</h3>
+<p>To better analyze the typical latency, we can remove the max 3 data and min 3 data points as outliers:</p>
+<pre class="mermaid"><code>xychart-beta
+    title "Network Latency (RTT) per Request (Trimmed)"
+    x-axis "Request Index" 0 --&gt; 100
+    y-axis "Latency (ms)" 0 --&gt; 2600
+    line [375, 453, 338, 638, 628, 569, 1092, 298, 388, 378, 283, 605, 348, 522, 473, 679, 580, 628, 615, 465, 559, 865, 360, 987, 945, 636, 822, 591, 433, 1339, 1086, 778, 546, 801, 493, 1185, 648, 386, 416, 574, 824, 1127, 728, 867, 685, 1301, 1715, 505, 830, 571, 564, 935, 465, 742, 534, 625, 664, 574, 465, 828, 408, 270, 226, 625, 407, 515, 430, 799, 511, 515, 929, 532, 914, 365, 421, 716, 735, 232, 296, 785, 334, 414, 553, 229, 554, 732, 909, 470, 842, 1418, 1441, 940, 477, 1107, 943, 913, 776, 1824, 2159, 1652, 307, 546, 406, 581, 769, 426, 1336, 767, 233, 672, 619, 912, 1246, 695, 1150, 948, 823, 2374, 526, 1593, 1206]</code></pre>
+<p>The trimmed data shows:</p>
+<ul>
+<li>Min: 226</li>
+<li>Max: 2374</li>
+<li>Mean: 725.68</li>
+<li>Median: 625</li>
+<li>Standard Deviation: 385.50</li>
+</ul>
+<h3 id="backend-baseline-measurements"><a href="../../results/#baseline-latency-logs-server">Backend: Baseline measurements</a></h3>
+<p>the typical server processing time is around 40ms:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>0: 480x640 1 person, 37.5ms
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>Speed: 1.2ms preprocess, 37.5ms inference, 0.4ms postprocess per image at shape (1, 3, 480, 640)
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>Results saved to ......
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>Detection Results: Found 1 objects
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>[IoT] Processed Image from ESP32_Cam_01, Detections: 1
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>INFO:     192.168.0.171:63600 - &quot;POST /api/devices/... HTTP/1.1&quot; 200 OK
+</span></code></pre></div>
+<p>here is the graph of server processing time over time:</p>
+<pre class="mermaid"><code>xychart-beta
+    title "Total Server Processing Time (Pre + Inference + Post)"
+    x-axis "Request Index" 0 --&gt; 113
+    y-axis "Processing Time (ms)" 30 --&gt; 50
+    line [39.0, 41.3, 34.5, 37.4, 40.7, 44.4, 37.5, 39.4, 40.0, 37.1, 38.3, 40.0, 36.6, 38.3, 37.5, 40.4, 39.6, 41.8, 42.9, 43.6, 40.5, 40.6, 39.6, 42.1, 41.1, 40.1, 37.3, 41.0, 39.7, 40.5, 40.0, 44.3, 35.9, 43.9, 38.1, 44.2, 37.7, 44.0, 42.8, 39.8, 40.2, 40.5, 39.8, 42.9, 41.3, 37.4, 40.5, 38.0, 40.7, 40.5, 37.4, 35.8, 40.9, 40.7, 37.1, 41.0, 39.9, 39.4, 40.6, 42.4, 40.2, 37.6, 37.3, 41.2, 40.8, 37.5, 43.4, 42.3, 41.7, 35.1, 41.1, 42.1, 41.3, 34.8, 40.2, 36.5, 35.2, 38.8, 37.2, 38.5, 35.1, 39.8, 41.4, 36.7, 35.7, 33.5, 37.7, 33.2, 41.3, 36.4, 39.4, 37.0, 37.8, 32.5, 37.4, 37.6, 37.4, 39.4, 34.1, 38.4, 35.1, 39.5, 35.6, 43.9, 38.8, 40.2, 43.0, 37.9, 40.7, 41.8, 43.0, 35.2, 45.5]</code></pre>
+<p>the server processing time is relatively stable, with an average of 39.5ms and a standard deviation of 2.8ms, indicating that the server is not the main source of latency variability.</p>
+<h2 id="optimizations-keep-alive-http-persistent-connections">Optimizations - <code>Keep Alive</code> &amp; <code>HTTP Persistent Connections</code></h2>
+<p>When I analysize the latency breakdown logs:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>INFO:     192.xxx.x.xxx:55282 - &quot;POST /api/devices/file/image HTTP/1.1&quot; 200 OK
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>INFO:     192.xxx.x.xxx:55283 - &quot;POST /api/devices/file/image HTTP/1.1&quot; 200 OK
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>INFO:     192.xxx.x.xxx:55284 - &quot;POST /api/devices/file/image HTTP/1.1&quot; 200 OK
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>...
+</span></code></pre></div>
+<p>In my origial implementation, each HTTP request opens a new TCP connection, send the request, and then close the connection. This TCP connection setup and teardown may introduce significant overhead.</p>
+<p>therefore, I only setup the http request once, and reuse the same connection for subsequent requests. Here is what I got:</p>
+<pre class="mermaid"><code>xychart-beta
+    title "Network Latency (RTT) per Request (ms)"
+    x-axis "Request Index" 0 --&gt; 100
+    y-axis "Time (ms)" 0 --&gt; 4500
+    line [595, 607, 661, 703, 1601, 595, 387, 641, 347, 337, 1536, 842, 797, 1278, 1052, 1071, 1910, 3217, 799, 1087, 1174, 688, 571, 581, 937, 844, 853, 573, 845, 819, 1130, 862, 292, 607, 903, 346, 420, 1036, 768, 615, 530, 854, 352, 1318, 803, 659, 478, 605, 675, 1657, 838, 974, 1112, 915, 836, 995, 705, 1149, 593, 615, 1202, 390, 359, 611, 906, 633, 739, 379, 373, 2079, 469, 890, 649, 1427, 587, 915, 652, 699, 933, 1138, 2417, 1104, 4351, 785, 1076, 576, 1171, 684, 680, 652, 683, 794, 614, 555, 418, 1084, 1422, 1272, 1367, 622, 661, 743, 2649, 604, 595, 1209, 1355, 391, 605, 625, 1202, 693, 1395, 1300, 1083, 675, 972, 396, 235, 772, 559, 518, 541, 659, 1304, 848]</code></pre>
+<p>The "optimized" latency data shows:</p>
+<ul>
+<li>Mean: 893.14 ms</li>
+<li>Max: 4351 ms</li>
+<li>Min: 235 ms</li>
+<li>Median: 755.5 ms</li>
+<li>Standard Deviation (SD): 547.71 ms</li>
+</ul>
+<p>which is even worse than before...</p>
+<p>After removing the top 3 and bottom 3 outliers, we have:</p>
+<pre class="mermaid"><code>xychart-beta
+    title "Network Latency (RTT) per Request (ms)"
+    x-axis "Request Index" 0 --&gt; 120
+    y-axis "Time (ms)" 0 --&gt; 2500
+    line [595, 607, 661, 703, 1601, 595, 387, 641, 347, 1536, 842, 797, 1278, 1052, 1071, 1910, 799, 1087, 1174, 688, 571, 581, 937, 844, 853, 573, 845, 819, 1130, 862, 607, 903, 346, 420, 1036, 768, 615, 530, 854, 352, 1318, 803, 659, 478, 605, 675, 1657, 838, 974, 1112, 915, 836, 995, 705, 1149, 593, 615, 1202, 390, 359, 611, 906, 633, 739, 379, 373, 2079, 469, 890, 649, 1427, 587, 915, 652, 699, 933, 1138, 2417, 1104, 785, 1076, 576, 1171, 684, 680, 652, 683, 794, 614, 555, 418, 1084, 1422, 1272, 1367, 622, 661, 743, 604, 595, 1209, 1355, 391, 605, 625, 1202, 693, 1395, 1300, 1083, 675, 972, 396, 772, 559, 518, 541, 659, 1304, 848]</code></pre>
+<p>The trimmed "optimized" latency data shows:</p>
+<ul>
+<li>Mean: 845.46 ms</li>
+<li>Max: 2417 ms</li>
+<li>Min: 346 ms</li>
+<li>Median: 755.5 ms</li>
+<li>Standard Deviation (SD): 364.93 ms</li>
+</ul>
+<p>so where is the problem? I look back at the server logs, and found this:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>INFO:     192.xxx.xxx.xxx:63912 - &quot;POST /api/devices/file/image HTTP/1.1&quot; 200 OK
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>INFO:     127.0.0.1:56071 - &quot;GET /livereload/118715765/118716218 HTTP/1.1&quot; 404 Not Found
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>INFO:     127.0.0.1:56071 - &quot;GET /livereload/118715765/118716218 HTTP/1.1&quot; 404 Not Found
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>...
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>INFO:     192.xxx.xxx.xxx:63912 - &quot;POST /api/devices/file/image HTTP/1.1&quot; 200 OK
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>INFO:     127.0.0.1:56071 - &quot;GET /livereload/118715765/118716218 HTTP/1.1&quot; 404 Not Found
+</span></code></pre></div>
+<p>This indicates there might be other unwanted background traffic on the server, interfering with the processing of my requests.</p>
+<h2 id="optimizations-asynchronous-server-task-flow">Optimizations - Asynchronous Server Task flow</h2>
+<p>In addition, the current flow completes everything sequentially. So the server will first receive the entire image, process it, and then send back the response. This means the device has to wait for the entire processing to complete before it can proceed.</p>
+<p>Therefore, I modified the server to handle the image processing asynchronously and return the response quicker</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">receive_image</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">raw_bytes</span> <span class="o">=</span> <span class="k">await</span> <span class="n">request</span><span class="o">.</span><span class="n">body</span><span class="p">()</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="o">...</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">background_tasks</span><span class="o">.</span><span class="n">add_task</span><span class="p">(</span><span class="n">background_image_processing</span><span class="p">,</span> <span class="n">raw_bytes</span><span class="p">,</span> <span class="n">x_device_id</span><span class="p">)</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">pending_commands</span> <span class="o">=</span> <span class="k">await</span> <span class="n">get_and_clear_commands</span><span class="p">(</span><span class="n">x_device_id</span><span class="p">)</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="o">...</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="k">return</span> <span class="n">formatted_pending_commands</span>
+</span></code></pre></div>
+<h2 id="measure-latency-after-optimizations-hd-image">Measure Latency After Optimizations - HD Image</h2>
+<p>in the real scenario, the image is at least HD (1280x720) resolution, so I also measured the latency with HD images</p>
+<p>here is the graph of latency measure on the ESP32 (which is the total latency) and on the server (which is only the server processing time):</p>
+<pre class="mermaid"><code>xychart-beta
+    title "IoT Latency vs Server Latency (ms)"
+    x-axis "Request Index (Success Only)" 1 --&gt; 94
+    y-axis "Latency (ms)" 0 --&gt; 15000
+    line [4432, 9918, 9313, 12558, 7812, 11286, 7727, 8167, 6857, 6339, 6638, 6881, 5133, 3858, 2976, 1601, 1475, 2860, 3782, 3004, 3282, 3720, 2239, 1530, 2223, 1697, 2662, 2487, 3278, 3805, 3916, 1946, 1487, 4010, 2932, 3508, 3402, 4117, 2929, 2835, 4157, 3503, 2948, 3282, 1819, 1952, 3881, 5097, 4494, 709, 5146, 3121, 3964, 2356, 2547, 4314, 2945, 5045, 3171, 2201, 2809, 2995, 3146, 1872, 3592, 4479, 5109, 3236, 599, 3591, 2534, 1601, 1527, 2315, 3846, 2798, 2354, 3759, 3512, 2283, 5194, 2986, 3909, 3182, 2470, 2172, 2347, 2449, 886, 1235, 854, 1103, 487, 3932]
+    line [3129, 9249, 9024, 12482, 7740, 10044, 7568, 7980, 6708, 6296, 6218, 6504, 5061, 3793, 2849, 1498, 1441, 2807, 3706, 2673, 3237, 3675, 2188, 1464, 1653, 1640, 2575, 2463, 3114, 3746, 3852, 1920, 1447, 3963, 2887, 3427, 3362, 4068, 2892, 2779, 3559, 3467, 2901, 3248, 1762, 1926, 3786, 5025, 3850, 676, 5129, 3097, 3934, 2317, 2519, 4292, 2903, 4974, 2885, 2166, 2774, 2940, 3096, 1807, 3517, 3894, 5004, 3201, 562, 3521, 2507, 1564, 1495, 2273, 3780, 2697, 2321, 3732, 3447, 2201, 3516, 2959, 3780, 3158, 2441, 2144, 2274, 2420, 833, 1200, 783, 1061, 467, 3897]</code></pre>
+<p>Here is the difference between the IoT latency and the server latency (which is the network + overhead):</p>
+<pre class="mermaid"><code>
+xychart-beta
+    title "Network Overhead (IoT Latency - Server Latency)"
+    x-axis "Request Index" 1 --&gt; 94
+    y-axis "Net Overhead (ms)" 0 --&gt; 1500
+    line [1303, 669, 289, 76, 72, 1242, 159, 187, 149, 43, 420, 377, 72, 65, 127, 103, 34, 53, 76, 331, 45, 45, 51, 66, 570, 57, 87, 24, 164, 59, 64, 26, 40, 47, 45, 81, 40, 49, 37, 56, 598, 36, 47, 34, 57, 26, 95, 72, 644, 33, 17, 24, 30, 39, 28, 22, 42, 71, 286, 35, 35, 55, 50, 65, 75, 585, 105, 35, 37, 70, 27, 37, 32, 42, 66, 101, 33, 27, 65, 82, 1678, 27, 129, 24, 29, 28, 73, 29, 53, 35, 71, 42, 20, 35]</code></pre>
+<h1 id="memory-optimization">Memory optimization</h1>
+<h3 id="measure-heap-usage">Measure heap usage</h3>
+<p>in fact, the baseline and the optimized heap usage are similar. I did not measure the baseline heap usage, but here is the final heap usage after all optimizations:</p>
+<pre class="mermaid"><code>xychart-beta
+    title "Free Heap Trend (Per Request ID)"
+    x-axis "Request ID" 1 --&gt; 97
+    y-axis "Heap (Bytes)" 183000 --&gt; 189000
+    line [188436, 187444, 187444, 185320, 185128, 185116, 185116, 185116, 183492, 185108, 185120, 185108, 185108, 185120, 185116, 185120, 185120, 185108, 185108, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185148, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185324, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185312, 185108, 185324, 185312, 185312, 185312, 185312, 185312, 185312, 185324]</code></pre>
+<p>The heap usage remains relatively stable throughout the requests, with minor fluctuations likely due to GC activity or temporary allocations. The free heap ranges from approximately 183,492 bytes to 188,436 bytes, indicating that there is no significant memory leak or excessive memory consumption during operation.</p>
+<hr />
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../freertos-implementation/" class="md-footer__link md-footer__link--prev" aria-label="Previous: ESP32 &amp; FreeRTOS">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                ESP32 & FreeRTOS
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../../backend/" class="md-footer__link md-footer__link--next" aria-label="Next: AI &amp; Backend">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                AI & Backend
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      © 2024 Zilin Liu
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.linkedin.com/in/zilin-l-17b71022b/" target="_blank" rel="noopener" title="www.linkedin.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3M135.4 416H69V202.2h66.5V416zM102.2 96a38.5 38.5 0 1 1 0 77 38.5 38.5 0 1 1 0-77m282.1 320h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/kiminus" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://kiminus.github.io/Surfwatch-Public" target="_blank" rel="noopener" title="kiminus.github.io" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M360.8 1.2c-17-4.9-34.7 5-39.6 22l-128 448c-4.9 17 5 34.7 22 39.6s34.7-5 39.6-22l128-448c4.9-17-5-34.7-22-39.6m64.6 136.1c-12.5 12.5-12.5 32.8 0 45.3l73.4 73.4-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l96-96c12.5-12.5 12.5-32.8 0-45.3l-96-96c-12.5-12.5-32.8-12.5-45.3 0zm-274.7 0c-12.5-12.5-32.8-12.5-45.3 0l-96 96c-12.5 12.5-12.5 32.8 0 45.3l96 96c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256l73.3-73.4c12.5-12.5 12.5-32.8 0-45.3z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://kiminus.github.io/Kiminus" target="_blank" rel="noopener" title="kiminus.github.io" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M351.9 280H161c2.9 64.5 17.2 123.9 37.5 167.4 11.4 24.5 23.7 41.8 35.1 52.4 11.2 10.5 18.9 12.2 22.9 12.2s11.7-1.7 22.9-12.2c11.4-10.6 23.7-28 35.1-52.4 20.3-43.5 34.6-102.9 37.5-167.4zm-191-48h190.9c-2.8-64.5-17.1-123.9-37.4-167.4-11.4-24.4-23.7-41.8-35.1-52.4C268.1 1.7 260.4 0 256.4 0s-11.7 1.7-22.9 12.2c-11.4 10.6-23.7 28-35.1 52.4-20.3 43.5-34.6 102.9-37.5 167.4m-48 0c3.5-85.6 25.6-165.1 57.9-217.3C78.7 47.3 10.9 131.2 1.5 232zM1.5 280c9.4 100.8 77.2 184.7 169.3 217.3-32.3-52.2-54.4-131.7-57.9-217.3zm398.4 0c-3.5 85.6-25.6 165.1-57.9 217.3 92.1-32.7 159.9-116.5 169.3-217.3zm111.4-48C501.9 131.2 434.1 47.3 342 14.7c32.3 52.2 54.4 131.7 57.9 217.3z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "content.code.select", "content.code.annotate", "content.footnote.tooltips", "navigation.footer", "navigation.top", "toc.integrate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../js/katex.js"></script>
+      
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/katex.min.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/contrib/auto-render.min.js"></script>
+      
+        <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+      
+        <script src="../../js/init-datatables.js"></script>
+      
+    
+  </body>
+</html>
